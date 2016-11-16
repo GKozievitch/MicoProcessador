@@ -1,0 +1,374 @@
+-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- UFPR, BCC, ci210 2016-2 trabalho semestral, autor: Roberto Hexsel, 07out
+-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- display: exibe inteiro na saida padrao do simulador
+--          NAO ALTERE ESTE MODELO
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+library IEEE; use std.textio.all;
+use work.p_wires.all;
+
+entity display is
+  port (rst,clk : in bit;
+        enable  : in bit;
+        data    : in reg32);
+end display;
+
+architecture functional of display is
+  file output : text open write_mode is "STD_OUTPUT";
+begin  -- functional
+
+  U_WRITE_OUT: process(clk)
+    variable msg : line;
+  begin
+    if falling_edge(clk) and enable = '1' then
+      write ( msg, string'(BV32HEX(data)) );
+      writeline( output, msg );
+    end if;
+  end process U_WRITE_OUT;
+
+end functional;
+-- ++ display ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- MICO X
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+library IEEE; use IEEE.std_logic_1164.all;
+use work.p_wires.all;
+
+entity mico is
+  port (rst,clk : in    bit);
+end mico;
+
+architecture functional of mico is
+
+  component display is                  -- neste arquivo
+    port (rst,clk : in bit;
+          enable  : in bit;
+          data    : in reg32);
+  end component display;
+
+  component mem_prog is                 -- no arquivo mem.vhd
+    port (ender : in  reg6;
+          instr : out reg32);
+  end component mem_prog;
+
+  component ULA is                      -- neste arquivo
+    port (fun : in reg4;
+          alfa,beta : in  reg32;
+          gama      : out reg32);
+  end component ULA;
+ 
+  component R is                        -- neste arquivo
+    port (clk         : in  bit;
+          wr_en       : in  bit;
+          r_a,r_b,r_c : in  reg4;
+          A,B         : out reg32;
+          C           : in  reg32);
+  end component R;
+
+  component mux32_2 is			-- neste arquivo
+  port(a,b : in  reg32;                   
+       s   : in  bit;                     
+       z   : out reg32);                  
+  end component mux32_2;
+
+
+  type t_control_type is record
+    extZero  : bit;       -- estende com zero=1, com sinal=0
+    selBeta  : bit;       -- seleciona fonte para entrada B da ULA
+    wr_display: bit;      -- atualiza display=1
+    selNxtIP : bit;       -- seleciona fonte do incremento do IP
+    wr_reg   : bit;       -- atualiza registrador: R(c) <= C
+  end record;
+
+  type t_control_mem is array (0 to 15) of t_control_type;
+
+  -- preencha esta tabela com os sinais de controle adequados
+  -- a tabela eh indexada com o opcode da instrucao
+  constant ctrl_table : t_control_mem := (
+  --extZ sBeta wrD sIP wrR
+    ('0','0', '0', '0','0'),            -- NOP
+    ('0','0', '0', '0','1'),            -- ADD
+    ('0','0', '0', '0','1'),            -- SUB
+    ('0','0', '0', '0','1'),            -- MUL
+    ('0','0', '0', '0','1'),            -- AND
+    ('0','0', '0', '0','1'),            -- OR
+    ('0','0', '0', '0','1'),            -- XOR
+    ('0','0', '0', '0','1'),            -- NOT
+    ('1','0', '0', '0','1'),            -- SLL
+    ('1','0', '0', '0','1'),            -- SRL
+    ('0','1', '0', '0','1'),            -- ORI
+    ('0','1', '0', '0','1'),            -- ADDI
+    ('0','0', '1', '0','0'),            -- SHOW
+    ('0','0', '0', '1','0'),            -- JUMP
+    ('0','0', '0', '1','0'),            -- BRANCH
+    ('0','0', '0', '1','0'));           -- HALT
+
+  signal extZero, selBeta, wr_display, selNxtIP, wr_reg : bit;
+
+  signal instr, A, B, C, beta, extended : reg32;
+  signal this  : t_control_type;
+  signal const, ip : reg16;
+  signal opcode : reg4;
+  signal i_opcode : natural range 0 to 15;
+  
+begin  -- functional
+
+  -- memoria de programa contem somente 64 palavras
+  U_mem_prog: mem_prog port map(ip(5 downto 0), instr);
+
+  opcode <= instr(31 downto 28);
+  i_opcode <= BV2INT4(opcode);          -- indice do vetor DEVE ser inteiro
+  
+  this <= ctrl_table(i_opcode);         -- sinais de controle
+
+  extZero    <= this.extZero;
+  selBeta    <= this.selBeta;
+  wr_display <= this.wr_display;
+  selNxtIP   <= this.selNxtIP;
+  wr_reg     <= this.wr_reg;
+
+  
+
+
+  
+  U_regs: R port map (clk,wr_en,r_a,r_b,r_c,A,B,C);
+
+  U-mux32_2: mux32_2 port map (B,b,s,Z);
+  
+  U_ULA: ULA port map (fun,A,Z,gama);
+
+  
+  -- nao altere esta linha
+  U_display: display port map (rst, clk, wr_display, A);
+  
+end functional;
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+LIBRARY ieee;
+USE ieee.std_logic_1164.all;
+USE ieee.std_logic_signed.all; -- talvez não precise fazer duas vezes
+use work.p_wires.all;
+
+entity ULA is
+  port (fun : in reg4;
+        alfa,beta : in  reg32;
+        gama      : out reg32);
+end ULA;
+
+architecture behaviour of ULA is
+
+
+
+   signal result : STD_LOGIC_VECTOR(31 downto 0);
+   signal X_temp, Y_temp : STD_LOGIC_VECTOR(31 downto 0);
+
+begin
+
+	X(31 downto 0) <= '0' & alfa(31 downto 0);
+	Y(31 downto 0) <= '0' & beta(31 downto 0);
+
+	gama <= result(31 downto 0);
+	
+	result <= 	(X(31 downto 0) + Y(31 downto 0)) 	when fun = "0001" else 	--ADD --tem que fazer na mão --FEITO
+			(X(31 downto 0) - Y(31 downto 0))	when fun = "0010" else	--SUB --tem que fazer na mão --FEITO
+	     		(X(31 downto 0) * Y(31 downto 0)) 	when fun = "0011" else 	--MUL --tem que fazer na mão	
+	     		(X(31 downto 0) AND Y(31 downto 0)) 	when fun = "0100" else  --AND
+			(X(31 downto 0) OR Y(31 downto 0)) 	when fun = "0101" else 	--OR
+	     		(X(31 downto 0) XOR Y(31 downto 0))	when fun = "0110" else  --XOR
+			('0' & not(X(31 downto 0)))  		when fun = "0111" else	--NOT
+			('0' & X(31 downto 0) & '0') 		when fun = "1000" else	--SHL --tem que fazer na mão
+	     		("00" & X(31 downto 1)) 		when fun = "1001" else  --SHR --tem que fazer na mão
+	     							when fun = "1010" else  --ORI --tem que fazer na mão
+	     		X(31 downto 0) + Y(31 downto 0))	when fun = "1011" else  --ADDI --tem que fazer na mão --FEITO
+			"000000000";
+  
+  
+  
+end behaviour;
+-- -----------------------------------------------------------------------
+
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+use work.p_wires.all;
+
+entity R is
+  port (clk         : in  bit;
+        wr_en       : in  bit;          -- ativo em 1
+        r_a,r_b,r_c : in  reg4;
+        A,B         : out reg32;
+        C           : in  reg32);
+end R;
+
+architecture rtl of R is
+
+  -- signal
+
+begin
+
+
+
+
+
+
+  
+end rtl;
+-- -----------------------------------------------------------------------
+
+
+
+
+
+--seletor entre R e constante
+
+
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- mux32_2(a,b,s,z)
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+use work.p_wires.all;
+
+entity mux32_2 is
+  port(a,b : in  reg32;                   -- entradas de dados
+       s   : in  bit;                     -- entrada de selecao
+       z   : out reg32);                  -- saida
+end mux32_2;
+
+architecture behaviour of mux32_2 is 
+
+  
+  signal result : STD_LOGIC_VECTOR(31 downto 0);
+  signal R_temp, P_temp : STD_LOGIC_VECTOR(31 downto 0) ; 
+  
+begin  
+	R(31 downto 0) <= '0' & a(31 downto 0);
+	P(31 downto 0) <= '0' & b(31 downto 0);
+
+	z <=  result(31 downto 0);
+	
+	result <=	R(31 downto 0) when s = "0" else
+			P(31 downto 0) when s = "1" else
+			"00000000"
+
+    
+end behaviour;
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+
+
+
+
+
+
+--somador
+
+
+
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- somador completo de um bit, modelo estrutural
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+library IEEE; use IEEE.std_logic_1164.all; use work.p_wires.all;
+
+entity addBit is
+  port(bitA, bitB, vem : in bit;    -- entradas A,B,vem-um
+       soma, vai       : out bit);  -- saida C,vai-um
+end addBit;
+
+architecture estrutural of addBit is 
+  component and2 is generic (prop:time);
+                      port (A,B: in bit; S: out bit);
+  end component and2;
+
+  component or3 is generic (prop:time);
+                      port (A,B,C: in bit; S: out bit);
+  end component or3;
+
+  component xor3 is generic (prop:time);
+                      port (A,B,C: in bit; S: out bit);
+  end component xor3;
+
+  signal a1,a2,a3: bit;
+begin
+  U_xor:  xor3 generic map ( t_xor3 ) port map ( bitA, bitB, vem, soma );
+
+  U_and1: and2 generic map ( t_and2 ) port map ( bitA, bitB, a1 );
+  U_and2: and2 generic map ( t_and2 ) port map ( bitA, vem,  a2 );
+  U_and3: and2 generic map ( t_and2 ) port map ( vem,  bitB, a3 );
+  U_or:   or3  generic map ( t_or3  ) port map ( a1, a2, a3, vai );
+
+end estrutural;
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- somador de 16 bits, sem adiantamento de vai-um
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+library IEEE; use IEEE.std_logic_1164.all; use work.p_wires.all;
+
+entity adderCadeia is
+  port(inpA, inpB : in reg32;
+       outC : out reg32;
+       vem  : in bit;
+       vai  : out bit
+       );
+end adderCadeia;
+
+architecture adderCadeia of adderCadeia is 
+  component addBit port(bitA, bitB, vem : in bit;
+                        soma, vai       : out bit);       
+  end component addBit;
+
+  signal v : reg32;                     -- cadeia de vai-um
+  signal r : reg32;                     -- resultado parcial
+begin
+
+  -- entrada vem deve estar ligada em '0' para somar, em '1' para subtrair
+  U_b0:  addBit port map ( inpA(0), inpB(0),  vem,   r(0),  v(0) );
+  U_b1:  addBit port map ( inpA(1), inpB(1),  v(0),  r(1),  v(1) );
+  U_b2:  addBit port map ( inpA(2), inpB(2),  v(1),  r(2),  v(2) );
+  U_b3:  addBit port map ( inpA(3), inpB(3),  v(2),  r(3),  v(3) );
+  U_b4:  addBit port map ( inpA(4), inpB(4),  v(3),  r(4),  v(4) );
+  U_b5:  addBit port map ( inpA(5), inpB(5),  v(4),  r(5),  v(5) );
+  U_b6:  addBit port map ( inpA(6), inpB(6),  v(5),  r(6),  v(6) );
+  U_b7:  addBit port map ( inpA(7), inpB(7),  v(6),  r(7),  v(7) );
+  U_b8:  addBit port map ( inpA(8), inpB(8),  v(7),  r(8),  v(8) );
+  U_b9:  addBit port map ( inpA(9), inpB(9),  v(8),  r(9),  v(9) );
+  U_ba:  addBit port map ( inpA(10),inpB(10), v(9),  r(10), v(10) );
+  U_bb:  addBit port map ( inpA(11),inpB(10), v(10), r(11), v(11) );
+  U_bc:  addBit port map ( inpA(12),inpB(12), v(11), r(12), v(12) );
+  U_bd:  addBit port map ( inpA(13),inpB(13), v(12), r(13), v(13) );
+  U_be:  addBit port map ( inpA(14),inpB(14), v(13), r(14), v(14) );
+  U_bf:  addBit port map ( inpA(15),inpB(15), v(14), r(15), v(15) );
+  U_b10: addBit port map ( inpA(16),inpB(16), v(15), r(16), v(16) );
+  U_b11: addBit port map ( inpA(17),inpB(17), v(16), r(17), v(17) );
+  U_b12: addBit port map ( inpA(18),inpB(18), v(17), r(18), v(18) );
+  U_b13: addBit port map ( inpA(19),inpB(19), v(18), r(19), v(19) );
+  U_b14: addBit port map ( inpA(20),inpB(20), v(19), r(20), v(20) );
+  U_b15: addBit port map ( inpA(21),inpB(21), v(20), r(21), v(21) );
+  U_b16: addBit port map ( inpA(22),inpB(22), v(21), r(22), v(22) );
+  U_b17: addBit port map ( inpA(23),inpB(23), v(22), r(23), v(23) );
+  U_b18: addBit port map ( inpA(24),inpB(24), v(23), r(24), v(24) );
+  U_b19: addBit port map ( inpA(25),inpB(25), v(24), r(25), v(25) );
+  U_b1a: addBit port map ( inpA(26),inpB(26), v(25), r(26), v(26) );
+  U_b1b: addBit port map ( inpA(27),inpB(27), v(26), r(27), v(27) );
+  U_b1c: addBit port map ( inpA(28),inpB(28), v(27), r(28), v(28) );
+  U_b1d: addBit port map ( inpA(29),inpB(29), v(28), r(29), v(29) );
+  U_b1e: addBit port map ( inpA(30),inpB(30), v(29), r(30), v(30) );
+  U_b1f: addBit port map ( inpA(31),inpB(31), v(30), r(31), v(31) );
+  vai <= v(31);
+  outC <= r;
+  
+end adderCadeia;
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
