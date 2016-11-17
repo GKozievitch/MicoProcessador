@@ -144,6 +144,37 @@ architecture estrut of mux2 is
 end architecture estrut;
 -- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- mux32_2(a,b,s,z)
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+use work.p_wires.all;
+
+entity mux32_2 is
+  port(a,b : in  reg32;                   -- entradas de dados
+       s   : in  bit;                     -- entrada de selecao
+       z   : out reg32);                  -- saida
+end mux32_2;
+
+architecture behaviour of mux32_2 is 
+
+  
+  signal result : STD_LOGIC_VECTOR(31 downto 0);
+  signal R_temp, P_temp : STD_LOGIC_VECTOR(31 downto 0) ; 
+  
+begin  
+	R(31 downto 0) <= '0' & a(31 downto 0);
+	P(31 downto 0) <= '0' & b(31 downto 0);
+
+	z <=  result(31 downto 0);
+	
+	result <=	R(31 downto 0) when s = "0" else
+			P(31 downto 0) when s = "1" else
+			"00000000"
+
+    
+end behaviour;
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 
 -- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 -- N-bit register, synchronous load active in '0', asynch reset
@@ -471,55 +502,64 @@ end adderCadeia;
 library IEEE; use IEEE.std_logic_1164.all; use work.p_wires.all;
 
 entity shift_left1 is
-  port(inp, : in reg32;
+  port(inp1 : in reg32;
+ 	cont: in bit;
        outp : out reg32;
        );
 end shift_left1;
+
+entity mux2 is
+  port(A,B : in  bit;
+       S   : in  bit;
+       Z   : out bit);
+end mux2;
 
 
 architecture estrutural of shift_left1 is 
 
   signal result :STD_LOGIC_VECTOR(31 downto 0);
   signal temp :STD_LOGIC_VECTOR(31 downto 0);
-
+  signal zero : in bit;
 begin
 
 outp <= result(31 downto 0);
 
 temp(31 downto 0)<=inp(31 downto 0);
 
-result(0)<="0";
-result(1)<=temp( 0 );
-result(2)<=temp( 1 );
-result(3)<=temp( 2 );
-result(4)<=temp( 3 );
-result(5)<=temp( 4 );
-result(6)<=temp( 5 );
-result(7)<=temp( 6 );
-result(8)<=temp( 7 );
-result(9)<=temp( 8 );
-result(10)<=temp( 9 );
-result(11)<=temp( 10 );
-result(12)<=temp( 11 );
-result(13)<=temp( 12 );
-result(14)<=temp( 13 );
-result(15)<=temp( 14 );
-result(16)<=temp( 15 );
-result(17)<=temp( 16 );
-result(18)<=temp( 17 );
-result(19)<=temp( 18 );
-result(20)<=temp( 19 );
-result(21)<=temp( 20 );
-result(22)<=temp( 21 );
-result(23)<=temp( 22 );
-result(24)<=temp( 23 );
-result(25)<=temp( 24 );
-result(26)<=temp( 25 );
-result(27)<=temp( 26 );
-result(28)<=temp( 27 );
-result(29)<=temp( 28 );
-result(30)<=temp( 29 );
-result(31)<=temp( 30 );
+zero <= "0";
+
+Umux1:  mux2 portmap(temp(0),  zero,    cont,result(0);
+Umux2:  mux2 portmap(temp(1),  temp(0), cont,result(1);
+Umux3:  mux2 portmap(temp(2),  temp(1), cont,result(2);
+Umux4:  mux2 portmap(temp(3),  temp(2), cont,result(3);
+Umux5:  mux2 portmap(temp(4),  temp(3), cont,result(4);
+Umux6:  mux2 portmap(temp(5),  temp(4), cont,result(5);
+Umux7:  mux2 portmap(temp(6),  temp(5), cont,result(6);
+Umux8:  mux2 portmap(temp(7),  temp(6), cont,result(7);
+Umux9:  mux2 portmap(temp(8),  temp(7), cont,result(8);
+Umux10: mux2 portmap(temp(9),  temp(8), cont,result(9);
+Umux11: mux2 portmap(temp(10), temp(9), cont,result(10);
+Umux12: mux2 portmap(temp(11), temp(10),cont,result(11);
+Umux13: mux2 portmap(temp(12), temp(11),cont,result(12);
+Umux14: mux2 portmap(temp(13), temp(12),cont,result(13);
+Umux15: mux2 portmap(temp(14), temp(13),cont,result(14);
+Umux16: mux2 portmap(temp(15), temp(14),cont,result(15);
+Umux17: mux2 portmap(temp(16), temp(15),cont,result(16);
+Umux18: mux2 portmap(temp(17), temp(16),cont,result(17);
+Umux19: mux2 portmap(temp(18), temp(17),cont,result(18);
+Umux20: mux2 portmap(temp(19), temp(18),cont,result(19);
+Umux21: mux2 portmap(temp(20), temp(19),cont,result(20);
+Umux22: mux2 portmap(temp(21), temp(20),cont,result(21);
+Umux23: mux2 portmap(temp(22), temp(21),cont,result(22);
+Umux24: mux2 portmap(temp(23), temp(22),cont,result(23);
+Umux25: mux2 portmap(temp(24), temp(23),cont,result(24);
+Umux26: mux2 portmap(temp(25), temp(24),cont,result(25);
+Umux27: mux2 portmap(temp(26), temp(25),cont,result(26);
+Umux28: mux2 portmap(temp(27), temp(26),cont,result(27);
+Umux29: mux2 portmap(temp(28), temp(27),cont,result(28);
+Umux30: mux2 portmap(temp(29), temp(28),cont,result(29);
+Umux31: mux2 portmap(temp(30), temp(29),cont,result(30);
+Umux32: mux2 portmap(temp(31), temp(30),cont,result(31);
 
 
 
@@ -532,58 +572,353 @@ end shift_left1;
 library IEEE; use IEEE.std_logic_1164.all; use work.p_wires.all;
 
 entity shift_right1 is
-  port(inp, : in reg32;
+  port(inp : in reg32;
+	cont : in bit;
        outp : out reg32;
        );
-end shift_left1;
+end shift_right1;
 
+entity mux2 is
+  port(A,B : in  bit;
+       S   : in  bit;
+       Z   : out bit);
+end mux2;
 
 architecture estrutural of shift_right1 is 
 
   signal result :STD_LOGIC_VECTOR(31 downto 0);
   signal temp :STD_LOGIC_VECTOR(31 downto 0);
-
+  signal zero : in bit;
 begin
 
-result(0)<=temp( 1 );
-result(1)<=temp( 2 );
-result(2)<=temp( 3 );
-result(3)<=temp( 4 );
-result(4)<=temp( 5 );
-result(5)<=temp( 6 );
-result(6)<=temp( 7 );
-result(7)<=temp( 8 );
-result(8)<=temp( 9 );
-result(9)<=temp( 10 );
-result(10)<=temp( 11 );
-result(11)<=temp( 12 );
-result(12)<=temp( 13 );
-result(13)<=temp( 14 );
-result(14)<=temp( 15 );
-result(15)<=temp( 16 );
-result(16)<=temp( 17 );
-result(17)<=temp( 18 );
-result(18)<=temp( 19 );
-result(19)<=temp( 20 );
-result(20)<=temp( 21 );
-result(21)<=temp( 22 );
-result(22)<=temp( 23 );
-result(23)<=temp( 24 );
-result(24)<=temp( 25 );
-result(25)<=temp( 26 );
-result(26)<=temp( 27 );
-result(27)<=temp( 28 );
-result(28)<=temp( 29 );
-result(29)<=temp( 30 );
-result(30)<=temp( 31 );
-result(31)<="0";
+
+outp <= result(31 downto 0);
+
+temp(31 downto 0)<=inp(31 downto 0);
+
+zero <= "0";
+
+Umux1:  mux2 portmap(temp(0),  temp(1), cont,result(1);
+Umux2:  mux2 portmap(temp(1),  temp(2), cont,result(2);
+Umux3:  mux2 portmap(temp(2),  temp(3), cont,result(3);
+Umux4:  mux2 portmap(temp(3),  temp(4), cont,result(4);
+Umux5:  mux2 portmap(temp(4),  temp(5), cont,result(5);
+Umux6:  mux2 portmap(temp(5),  temp(6), cont,result(6);
+Umux7:  mux2 portmap(temp(6),  temp(7), cont,result(7);
+Umux8:  mux2 portmap(temp(7),  temp(8), cont,result(8);
+Umux9:  mux2 portmap(temp(8),  temp(9), cont,result(9);
+Umux10: mux2 portmap(temp(9),  temp(10),cont,result(10);
+Umux11: mux2 portmap(temp(10), temp(11),cont,result(11);
+Umux12: mux2 portmap(temp(11), temp(12),cont,result(12);
+Umux13: mux2 portmap(temp(12), temp(13),cont,result(13);
+Umux14: mux2 portmap(temp(13), temp(14),cont,result(14);
+Umux15: mux2 portmap(temp(14), temp(15),cont,result(15);
+Umux16: mux2 portmap(temp(15), temp(16),cont,result(16);
+Umux17: mux2 portmap(temp(16), temp(17),cont,result(17);
+Umux18: mux2 portmap(temp(17), temp(18),cont,result(18);
+Umux19: mux2 portmap(temp(18), temp(19),cont,result(19);
+Umux20: mux2 portmap(temp(19), temp(20),cont,result(20);
+Umux21: mux2 portmap(temp(20), temp(21),cont,result(21);
+Umux22: mux2 portmap(temp(21), temp(22),cont,result(22);
+Umux23: mux2 portmap(temp(22), temp(23),cont,result(23);
+Umux24: mux2 portmap(temp(23), temp(24),cont,result(24);
+Umux25: mux2 portmap(temp(24), temp(25),cont,result(25);
+Umux26: mux2 portmap(temp(25), temp(26),cont,result(26);
+Umux27: mux2 portmap(temp(26), temp(27),cont,result(27);
+Umux28: mux2 portmap(temp(27), temp(28),cont,result(28);
+Umux29: mux2 portmap(temp(28), temp(29),cont,result(29);
+Umux30: mux2 portmap(temp(29), temp(30),cont,result(30);
+Umux31: mux2 portmap(temp(30), temp(31),cont,result(31);
+Umux32: mux2 portmap(temp(31), zero    ,cont,result(31);
 
 end shift_right1
 
 --++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- shift de N bits pra esquerda
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+library IEEE; use IEEE.std_logic_1164.all; use work.p_wires.all;
+
+entity shift_leftN is
+  port(inpn : in reg32;
+	contn : in reg5;
+       outpn : out reg32;
+       );
+end shift_leftN;
+
+entity shift_left1 is
+  port(inp : in reg32;
+	cont : in bit;
+       outp : out reg32;
+       );
+end shift_left1;
+
+architecture estrutural of shift_leftN is 
+
+signal sin1,  sin2,  sin3,  sin4,  sin5,  sin6,  sin7,  sin8,  sin9,  sin10,
+       sin11, sin12, sin13, sin14, sin15, sin16, sin17, sin18, sin19, sin20, sin21,
+       sin22, sin23, sin24, sin25, sin26, sin27, sin28, sin29, sin30, sin31 : in reg32;
 
 
+begin
+
+ Ushif1:  shift_left1 portmap(sin0,  contn(0),  sin1);
+ Ushif2:  shift_left1 portmap(sin1,  contn(1),  sin2);
+ Ushif3:  shift_left1 portmap(sin2,  contn(1),  sin3);
+ Ushif4:  shift_left1 portmap(sin3,  contn(2),  sin4);
+ Ushif5:  shift_left1 portmap(sin4,  contn(2),  sin5);
+ Ushif6:  shift_left1 portmap(sin5,  contn(2),  sin6);
+ Ushif7:  shift_left1 portmap(sin6,  contn(2),  sin7);
+ Ushif8:  shift_left1 portmap(sin7,  contn(3),  sin8);
+ Ushif9:  shift_left1 portmap(sin8,  contn(3),  sin9);
+ Ushif10: shift_left1 portmap(sin9,  contn(3), sin10);
+ Ushif11: shift_left1 portmap(sin10, contn(3), sin11);
+ Ushif12: shift_left1 portmap(sin11, contn(3), sin12);
+ Ushif13: shift_left1 portmap(sin12, contn(3), sin13);
+ Ushif14: shift_left1 portmap(sin13, contn(3), sin14);
+ Ushif15: shift_left1 portmap(sin14, contn(3), sin15);
+ Ushif16: shift_left1 portmap(sin15, contn(4), sin16);
+ Ushif17: shift_left1 portmap(sin16, contn(4), sin17);
+ Ushif18: shift_left1 portmap(sin17, contn(4), sin18);
+ Ushif19: shift_left1 portmap(sin18, contn(4), sin19);
+ Ushif20: shift_left1 portmap(sin19, contn(4), sin20);
+ Ushif21: shift_left1 portmap(sin20, contn(4), sin21);
+ Ushif22: shift_left1 portmap(sin21, contn(4), sin22);
+ Ushif23: shift_left1 portmap(sin22, contn(4), sin23);
+ Ushif24: shift_left1 portmap(sin23, contn(4), sin24);
+ Ushif25: shift_left1 portmap(sin24, contn(4), sin25);
+ Ushif26: shift_left1 portmap(sin25, contn(4), sin26);
+ Ushif27: shift_left1 portmap(sin26, contn(4), sin27);
+ Ushif28: shift_left1 portmap(sin27, contn(4), sin28);
+ Ushif29: shift_left1 portmap(sin28, contn(4), sin29);
+ Ushif30: shift_left1 portmap(sin29, contn(4), sin30);
+ Ushif31: shift_left1 portmap(sin30, contn(4), outpn);
+
+
+
+end shift_leftN
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- shift de N bits pra direita
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+library IEEE; use IEEE.std_logic_1164.all; use work.p_wires.all;
+
+entity shift_rightN is
+  port(inpn : in reg32;
+	contn : in reg5;
+       outpn : out reg32;
+       );
+end shift_rightN;
+
+entity shift_right1 is
+  port(inp : in reg32;
+	cont : in bit;
+       outp : out reg32;
+       );
+end shift_right1;
+
+architecture estrutural of shift_rightN is 
+
+signal sin1,  sin2,  sin3,  sin4,  sin5,  sin6,  sin7,  sin8,  sin9,  sin10 : in reg32;
+signal sin11, sin12, sin13, sin14, sin15, sin16, sin17, sin18, sin19, sin20, sin21 : in reg32;
+signal sin22, sin23, sin24, sin25, sin26, sin27, sin28, sin29, sin30, sin31 : in reg32;
+
+
+begin
+
+ Ushif1:  shift_right1 portmap(inpn,  contn(0),  sin1);
+ Ushif2:  shift_right1 portmap(sin1,  contn(1),  sin2);
+ Ushif3:  shift_right1 portmap(sin2,  contn(1),  sin3);
+ Ushif4:  shift_right1 portmap(sin3,  contn(2),  sin4);
+ Ushif5:  shift_right1 portmap(sin4,  contn(2),  sin5);
+ Ushif6:  shift_right1 portmap(sin5,  contn(2),  sin6);
+ Ushif7:  shift_right1 portmap(sin6,  contn(2),  sin7);
+ Ushif8:  shift_right1 portmap(sin7,  contn(3),  sin8);
+ Ushif9:  shift_right1 portmap(sin8,  contn(3),  sin9);
+ Ushif10: shift_right1 portmap(sin9,  contn(3), sin10);
+ Ushif11: shift_right1 portmap(sin10, contn(3), sin11);
+ Ushif12: shift_right1 portmap(sin11, contn(3), sin12);
+ Ushif13: shift_right1 portmap(sin12, contn(3), sin13);
+ Ushif14: shift_right1 portmap(sin13, contn(3), sin14);
+ Ushif15: shift_right1 portmap(sin14, contn(3), sin15);
+ Ushif16: shift_right1 portmap(sin15, contn(4), sin16);
+ Ushif17: shift_right1 portmap(sin16, contn(4), sin17);
+ Ushif18: shift_right1 portmap(sin17, contn(4), sin18);
+ Ushif19: shift_right1 portmap(sin18, contn(4), sin19);
+ Ushif20: shift_right1 portmap(sin19, contn(4), sin20);
+ Ushif21: shift_right1 portmap(sin20, contn(4), sin21);
+ Ushif22: shift_right1 portmap(sin21, contn(4), sin22);
+ Ushif23: shift_right1 portmap(sin22, contn(4), sin23);
+ Ushif24: shift_right1 portmap(sin23, contn(4), sin24);
+ Ushif25: shift_right1 portmap(sin24, contn(4), sin25);
+ Ushif26: shift_right1 portmap(sin25, contn(4), sin26);
+ Ushif27: shift_right1 portmap(sin26, contn(4), sin27);
+ Ushif28: shift_right1 portmap(sin27, contn(4), sin28);
+ Ushif29: shift_right1 portmap(sin28, contn(4), sin29);
+ Ushif30: shift_right1 portmap(sin29, contn(4), sin30);
+ Ushif31: shift_right1 portmap(sin30, contn(4), outpn);
+
+
+
+
+end shift_rightN;
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- multiplicador auxiliar
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+library IEEE; use IEEE.std_logic_1164.all; use work.p_wires.all;
+
+entity mult_1 is
+  port(inp : in reg32;
+	fator : in bit;
+	desloc : in reg5;
+	outp : out reg32;
+end mult_1;
+
+entity shift_leftN is
+  port(inp : in reg32;
+	cont : in reg5;
+       outp : out reg32;
+       );
+end shift_leftN;
+
+entity mux32_2 is
+  port(a,b : in  reg32;                  
+       s   : in  bit;                     
+       z   : out reg32);                 
+end mux32_2;
+
+
+architecture estrutural of mult_1 is
+
+signal temp :STD_LOGIC_VECTOR(31 downto 0);
+signal zero :STD_LOGIC_VECTOR(31 downto 0);
+signal saidamux :STD_LOGIC_VECTOR(31 downto 0);
+signal result :STD_LOGIC_VECTOR(31 downto 0);
+
+begin
+
+outp<=result(31 downto 0);
+temp(31 downto 0)<=inp(31 downto 0);
+zero(31 downto 0)<="00000000000000000000000000000000";
+
+
+Umux: mux32_2 portmap(temp,zero, fator, saidamux);
+Ushif: shift_leftN portmap(saidamux, desloc, result);
+
+end mult_1; 
+
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- multiplicador 32x32
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+library IEEE; use IEEE.std_logic_1164.all; use work.p_wires.all;
+
+entity mult_32 is
+  port(inp1, inp2 : in reg32;
+	outp : out reg32;
+end mult_32;
+
+entity mult_1 is
+  port(inp : in reg32;
+	fator : in bit;
+	desloc : in reg5;
+	outp : out reg32;
+end mult_1;
+
+entity adderCadeia is
+  port(inpA, inpB : in reg32;
+       outC : out reg32;
+       vem  : in bit;
+       vai  : out bit
+       );
+end adderCadeia;
+
+
+signal s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16 : reg32;
+signal s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31 : reg32;
+signal a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16 : reg32;
+signal a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31 : reg32;
+
+
+architecture estrutural of mult_32 is
+
+
+Umult0:  mult_1 portmap( inp1,inp2(0),  x"0",  s0);
+Umult1:  mult_1 portmap( inp1,inp2(1),  x"1",  s1);
+Umult2:  mult_1 portmap( inp1,inp2(2),  x"2",  s2);
+Umult3:  mult_1 portmap( inp1,inp2(3),  x"3",  s3);
+Umult4:  mult_1 portmap( inp1,inp2(4),  x"4",  s4);
+Umult5:  mult_1 portmap( inp1,inp2(5),  x"5",  s5);
+Umult6:  mult_1 portmap( inp1,inp2(6),  x"6",  s6);
+Umult7:  mult_1 portmap( inp1,inp2(7),  x"7",  s7);
+Umult8:  mult_1 portmap( inp1,inp2(8),  x"8",  s8);
+Umult9:  mult_1 portmap( inp1,inp2(9),  x"9",  s9);
+Umult10: mult_1 portmap( inp1,inp2(10), x"a",  s10);
+Umult11: mult_1 portmap( inp1,inp2(11), x"b",  s11);
+Umult12: mult_1 portmap( inp1,inp2(12), x"c",  s12);
+Umult13: mult_1 portmap( inp1,inp2(13), x"d",  s13);
+Umult14: mult_1 portmap( inp1,inp2(14), x"e",  s14);
+Umult15: mult_1 portmap( inp1,inp2(15), x"f",  s15);
+Umult16: mult_1 portmap( inp1,inp2(16), x"10", s16);
+Umult17: mult_1 portmap( inp1,inp2(17), x"11", s17);
+Umult18: mult_1 portmap( inp1,inp2(18), x"12", s18);
+Umult19: mult_1 portmap( inp1,inp2(19), x"13", s19);
+Umult20: mult_1 portmap( inp1,inp2(20), x"14", s20);
+Umult22: mult_1 portmap( inp1,inp2(22), x"16", s22);
+Umult23: mult_1 portmap( inp1,inp2(23), x"17", s23);
+Umult24: mult_1 portmap( inp1,inp2(24), x"18", s24);
+Umult25: mult_1 portmap( inp1,inp2(25), x"19", s25);
+Umult26: mult_1 portmap( inp1,inp2(26), x"1a", s26);
+Umult27: mult_1 portmap( inp1,inp2(27), x"1b", s27);
+Umult28: mult_1 portmap( inp1,inp2(28), x"1c", s28);
+Umult29: mult_1 portmap( inp1,inp2(29), x"1d", s29);
+Umult30: mult_1 portmap( inp1,inp2(30), x"1e", s30);
+Umult31: mult_1 portmap( inp1,inp2(31), x"1f", s31);
+
+Uadd0:  adderCadeia portmap(s0, s1, a0,  "0", vazio);
+Uadd1:  adderCadeia portmap(a0, s2, a1,  "0", vazio);
+Uadd1:  adderCadeia portmap(a0, s2, a1,  "0", vazio);
+Uadd2:  adderCadeia portmap(a1, s3, a2,  "0", vazio);
+Uadd3:  adderCadeia portmap(a2, s4, a3,  "0", vazio);
+Uadd4:  adderCadeia portmap(a3, s5, a4,  "0", vazio);
+Uadd5:  adderCadeia portmap(a4, s6, a5,  "0", vazio);
+Uadd6:  adderCadeia portmap(a5, s7, a6,  "0", vazio);
+Uadd7:  adderCadeia portmap(a6, s8, a7,  "0", vazio);
+Uadd8:  adderCadeia portmap(a7, s9, a8,  "0", vazio);
+Uadd9:  adderCadeia portmap(a8, s10,a9,  "0", vazio);
+Uadd10: adderCadeia portmap(a9, s11,a10, "0", vazio);
+Uadd11: adderCadeia portmap(a10,s12,a11, "0", vazio);
+Uadd12: adderCadeia portmap(a11,s13,a12, "0", vazio);
+Uadd13: adderCadeia portmap(a12,s14,a13, "0", vazio);
+Uadd14: adderCadeia portmap(a13,s15,a14, "0", vazio);
+Uadd15: adderCadeia portmap(a14,s16,a15, "0", vazio);
+Uadd16: adderCadeia portmap(a15,s17,a16, "0", vazio);
+Uadd17: adderCadeia portmap(a16,s18,a17, "0", vazio);
+Uadd18: adderCadeia portmap(a17,s19,a18, "0", vazio);
+Uadd19: adderCadeia portmap(a18,s20,a19, "0", vazio);
+Uadd20: adderCadeia portmap(a19,s21,a20, "0", vazio);
+Uadd21: adderCadeia portmap(a20,s22,a21, "0", vazio);
+Uadd22: adderCadeia portmap(a21,s23,a22, "0", vazio);
+Uadd23: adderCadeia portmap(a22,s24,a23, "0", vazio);
+Uadd24: adderCadeia portmap(a23,s25,a24, "0", vazio);
+Uadd25: adderCadeia portmap(a24,s26,a25, "0", vazio);
+Uadd26: adderCadeia portmap(a25,s27,a26, "0", vazio);
+Uadd27: adderCadeia portmap(a26,s28,a27, "0", vazio);
+Uadd28: adderCadeia portmap(a27,s29,a28, "0", vazio);
+Uadd29: adderCadeia portmap(a28,s30,a29, "0", vazio);
+Uadd30: adderCadeia portmap(a29,s31,a30, "0", vazio);
+Uadd31: adderCadeia portmap(a30,s32,a31, "0", vazio);
+
+
+end mult32;
+
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
