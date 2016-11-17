@@ -196,7 +196,7 @@ begin
   
 end behaviour;
 -- -----------------------------------------------------------------------
-
+gama<=not A;
 -- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 use work.p_wires.all;
 
@@ -225,7 +225,136 @@ end rtl;
 
 
 
+-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- UFPR, BCC, ci210 2016-2 trabalho semestral, autor: Roberto Hexsel, 07out
+-- ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- display: exibe inteiro na saida padrao do simulador
+--          NAO ALTERE ESTE MODELO
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+library IEEE; use std.textio.all;
+use work.p_wires.all;
+
+entity display is
+  port (rst,clk : in bit;
+        enable  : in bit;
+        data    : in reg32);
+end display;
+
+architecture functional of display is
+  file output : text open write_mode is "STD_OUTPUT";
+begin  -- functional
+
+  U_WRITE_OUT: process(clk)
+    variable msg : line;
+  begin
+    if falling_edge(clk) and enable = '1' then
+      write ( msg, string'(BV32HEX(data)) );
+      writeline( output, msg );
+    end if;
+  end process U_WRITE_OUT;
+
+end functional;
+-- ++ display ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- MICO X
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+library IEEE; use IEEE.std_logic_1164.all;
+use work.p_wires.all;
+
+entity mico is
+  port (rst,clk : in    bit);
+end mico;
+
+architecture functional of mico is
+
+  component display is                  -- neste arquivo
+    port (rst,clk : in bit;
+          enable  : in bit;
+          data    : in reg32);
+  end component display;
+
+  component mem_prog is                 -- no arquivo mem.vhd
+    port (ender : in  reg6;
+          instr : out reg32);
+  end component mem_prog;
+
+  component ULA is                      -- neste arquivo
+    port (fun : in reg4;
+          alfa,beta : in  reg32;
+          gama      : out reg32);
+  end component ULA;
+ 
+  component R is                        -- neste arquivo
+    port (clk         : in  bit;
+          wr_en       : in  bit;
+          r_a,r_b,r_c : in  reg4;
+          A,B         : out reg32;
+          C           : in  reg32);
+  end component R;
+
+  component mux32_2 is			-- neste arquivo
+  port(a,b : in  reg32;                   
+       s   : in  bit;                     
+       z   : out reg32);                  
+  end component mux32_2;
+
+
+  type t_control_type is record
+    extZero  : bit;       -- estende com zero=1, com sinal=0
+    selBeta  : bit;       -- seleciona fonte para entrada B da ULA
+    wr_display: bit;      -- atualiza display=1
+    selNxtIP : bit;       -- seleciona fonte do incremento do IP
+    wr_reg   : bit;       -- atualiza registrador: R(c) <= C
+  end record;
+
+  type t_control_mem is array (0 to 15) of t_control_type;mux
+
+  -- preencha esta tabela com os sinais de controle adequados
+  -- a tabela eh indexada com o opcode da instrucao
+  constant ctrl_table : t_control_mem := (
+  --extZ sBeta wrD sIP wrR
+    ('0','0', '0', '0','0'),            -- NOP
+    ('0','0', '0', '0','1'),            -- ADD
+    ('0','0', '0', '0','1'),            -- SUB
+    ('0','0', '0', '0','1'),            -- MUL
+    ('0','0', '0', '0','1'),            -- AND
+    ('0','0', '0', '0','1'),            -- OR
+    ('0','0', '0', '0','1'),            -- XOR
+    ('0','0', '0', '0','1'),            -- NOT
+    ('1','0', '0', '0','1'),            -- SLL
+    ('1','0', '0', '0','1'),            -- SRL
+    ('0','1', '0', '0','1'),            -- ORI
+    ('0','1', '0', '0','1'),            -- ADDI
+    ('0','0', '1', '0','0'),            -- SHOW
+    ('0','0', '0', '1','0'),            -- JUMP
+    ('0','0', '0', '1','0'),            -- BRANCH
+    ('0','0', '0', '1','0'));           -- HALT
+
+  signal extZero, selBeta, wr_display, selNxtIP, wr_reg : bit;
+
+  signal instr, A, B, C, beta, extended : reg32;
+  signal this  : t_control_type;
+  signal const, ip : reg16;
+  signal opcode : reg4;
+  signal i_opcode : natural range 0 to 15;
+  
+begin  -- functional
+
+  -- memoria de programa contem somente 64 palavras
+  U_mem_prog: mem_prog port map(ip(5 downto 0), instr);
+
+  opcode <= instr(31 downto 28);
+  i_opcode <= BV2INT4(opcode);          -- indice do vetor DEVE ser inteiro
+  
+  this <= ctrl_table(i_opcode);         -- sinais de controle
+
+  extZero    <= this.extZero;
 
 --seletor entre R e constante
 
@@ -260,4 +389,5 @@ begin
     
 end behaviour;
 -- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 
